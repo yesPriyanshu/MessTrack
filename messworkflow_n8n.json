@@ -1,0 +1,765 @@
+{
+  "name": "messworkflow_n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mess-review-webhook",
+        "options": {}
+      },
+      "name": "Webhook Reviews",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -608,
+        112
+      ],
+      "id": "c286c3ee-0657-461f-9b67-a3124c62acd4",
+      "typeVersion": 2.1,
+      "webhookId": "cd15f83b-7fda-4a3e-8b3f-b54539e986f9"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU",
+          "mode": "list",
+          "cachedResultName": "Hostel Reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mac Donald Hall",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "name": "Read Mac Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        160,
+        -192
+      ],
+      "id": "5e3a3270-e108-411b-a605-d306100e6ca9",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LmYhGFvY7t3ZEGY6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "859b4bb3-8948-4b5d-ac5f-3e88a94e40d8",
+              "leftValue": "={{ $json.reviewCount }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Check ≥5 Reviews",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        560,
+        96
+      ],
+      "id": "7a05a983-7ffb-449c-9619-b70895eecc12",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU",
+          "mode": "list",
+          "cachedResultName": "Hostel Reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1875723721,
+          "mode": "list",
+          "cachedResultName": "Sen Hall",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit#gid=1875723721"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Breakfast",
+              "displayName": "Breakfast",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "BRating",
+              "displayName": "BRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lunch",
+              "displayName": "Lunch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LRating",
+              "displayName": "LRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Dinner",
+              "displayName": "Dinner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "DRating",
+              "displayName": "DRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Write Sen Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -48,
+        208
+      ],
+      "id": "c4567a69-4271-42e3-9530-149292965fa9",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LmYhGFvY7t3ZEGY6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40da83ae-fd6f-4368-839e-388c063e592c",
+              "name": "Prompt",
+              "value": "=You are an expert in analysing Students food review. Analyse the ratings received from students for yesterdays mess menu below and provide:\n\n1. Which meal had better reviews and the possible reasons of people liking it.\n2. What performed bad and why people disliked.\n3. A summmary starting with today's date \n(the summary will also be saved in the sheets later and you will receive the summary next day for good pattern recognitaion.)\n4. How mess menu can be improved and suggest food items students will like.\nDate : {{ $json.Date }}\nPrevious Summary : {{ $json.Summary }}\nBreakfast food:\n{{ $json.Breakfast }}\nBreakfast Rating :\n{{ $json.BRating }}\nLunch food : {{ $json.Lunch }}\nLunch Rating : {{ $json.LRating }}\nDinner food : {{ $json.Dinner}}\nDinner rating : {{ $json.DRating }}\nRespond ONLY with a raw JSON object using exactly these keys:\n{\n  \"TopMeal\": <string>,\n  \"BadMeal\": <string>,\n  \"Summary\": \"<2 sentence summary>\"\n  \"FoodSuggestion\": \"<2 sentence summary>\"\n}\nNo markdown. No code fences. Start with { and end with }.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        -144
+      ],
+      "id": "e95c7880-ba12-4f72-88e7-a961cdbe959c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a professional food rating analyser. \nRespond ONLY with a raw JSON object. \nNo markdown. No code fences. No backticks. No explanation. \nStart your response directly with { and end with }."
+            },
+            {
+              "content": "={{ $json.Prompt }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        160
+      ],
+      "id": "30f7cc81-813f-4c4a-80cf-a83e03f134f2",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "D1ypX3sAG18zVJv7",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// AI response (normally comes from previous node)\nconst ai = {\n  TopMeal: \"Dinner - Roti + Dal + Rice · Paneer\",\n  BadMeal: \"Breakfast - Sandwich + Banana\",\n  Summary: \"On 18th April 2026, the dinner meal received the highest rating of 5/5 due to its flavor and satisfying combination of ingredients. The breakfast meal rated only 3/5, with students mentioning that the sandwich was bland and insufficient for a morning meal.\",\n  FoodSuggestion: \"To improve the mess menu, incorporating more variety in breakfast options like omelets or smoothies could enhance student satisfaction. Additionally, adding a wider range of vegetarian and non-vegetarian curries for lunch could appeal to diverse tastes.\"\n};\n\n// Extract date from summary automatically\nconst dateMatch = ai.Summary.match(/On\\s(.+?),/);\nconst reportDate = dateMatch ? dateMatch[1] : \"Today\";\n\n// Subject line\nconst subject = `Mess Menu Performance Report – ${reportDate}`;\n\n// Email HTML template\nconst html = `\n<div style=\"font-family:Arial,Helvetica,sans-serif;background:#f9fafb;padding:24px;\">\n  <div style=\"max-width:640px;margin:auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #e5e7eb;\">\n    \n    <h2 style=\"margin-bottom:6px;color:#111827;\">🍽 Mess Feedback Analysis Report</h2>\n    <p style=\"color:#6b7280;margin-top:0;\">Date: ${reportDate}</p>\n\n    <hr style=\"border:none;border-top:1px solid #e5e7eb;margin:20px 0;\" />\n\n    <h3 style=\"color:#16a34a;\">⭐ Top Performing Meal</h3>\n    <p style=\"font-size:16px;color:#111827;margin-top:4px;\">\n      ${ai.TopMeal}\n    </p>\n\n    <h3 style=\"color:#dc2626;margin-top:20px;\">⚠ Needs Improvement</h3>\n    <p style=\"font-size:16px;color:#111827;margin-top:4px;\">\n      ${ai.BadMeal}\n    </p>\n\n    <h3 style=\"color:#2563eb;margin-top:20px;\">📊 Summary</h3>\n    <p style=\"font-size:15px;color:#374151;line-height:1.6;\">\n      ${ai.Summary}\n    </p>\n\n    <h3 style=\"color:#9333ea;margin-top:20px;\">💡 Suggested Improvements</h3>\n    <p style=\"font-size:15px;color:#374151;line-height:1.6;\">\n      ${ai.FoodSuggestion}\n    </p>\n\n    <hr style=\"border:none;border-top:1px solid #e5e7eb;margin:24px 0;\" />\n\n    <p style=\"font-size:12px;color:#9ca3af;\">\n      Generated automatically by Hostel Mess AI Analytics System\n    </p>\n\n  </div>\n</div>\n`;\n\n// Return structured JSON\nreturn [\n  {\n    json: {\n      Subject: subject,\n      HTML: html,\n      SUMMARY: ai.Summary\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "e1b10669-4592-432c-af74-27fc08af6994",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "=he2u6df062@bltiwd.com",
+        "subject": "={{ $json.Subject }}",
+        "message": "={{ $json.HTML }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1504,
+        160
+      ],
+      "id": "739d6102-9ed3-4eb6-9cd4-fa514173956b",
+      "name": "Send a message",
+      "webhookId": "72577d92-9c26-4fc9-b621-adf5117152a0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jUhjRPwsono44K53",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.hostel }}",
+              "operation": "regex",
+              "value2": "Mac Donald Hall"
+            }
+          ]
+        }
+      },
+      "id": "c5ffe9e6-0f57-46e5-9de9-b4f6e75caf0a",
+      "name": "Switch Hostel1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU",
+          "mode": "list",
+          "cachedResultName": "Hostel Reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mac Donald Hall",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "name": "Read Sen Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        192,
+        368
+      ],
+      "id": "21c2a182-25e1-4335-b052-cde1fd14f857",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LmYhGFvY7t3ZEGY6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU",
+          "mode": "list",
+          "cachedResultName": "Hostel Reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mac Donald Hall",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.body.date }}",
+            "Breakfast": "={{ $json.body.reviews[0].food }}",
+            "BRating": "={{ $json.body.reviews[0].rating }}",
+            "Lunch": "={{ $json.body.reviews[1].food }}",
+            "LRating": "={{ $json.body.reviews[1].rating }}",
+            "Dinner": "={{ $json.body.reviews[2].food }}",
+            "DRating": "={{ $json.body.reviews[2].rating }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Breakfast",
+              "displayName": "Breakfast",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "BRating",
+              "displayName": "BRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lunch",
+              "displayName": "Lunch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LRating",
+              "displayName": "LRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Dinner",
+              "displayName": "Dinner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DRating",
+              "displayName": "DRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Write Mac Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -48,
+        0
+      ],
+      "id": "0935caf1-e60d-4c39-855a-fd19cef3c26d",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LmYhGFvY7t3ZEGY6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// extract all row numbers\nconst rowNumbers = items.map(item => item.json.row_number);\n\n// find latest row\nconst lastRowNumber = Math.max(...rowNumbers);\n\n// ignore header row if present (optional)\nconst reviewCount = lastRowNumber - 1;\n\n// check trigger condition\nconst shouldRunAI =\n  reviewCount >= 5 &&\n  reviewCount % 5 === 0;\n\n// attach metadata WITHOUT losing original rows\nreturn items.map(item => {\n  return {\n    json: {\n      ...item.json,\n      lastRowNumber,\n      reviewCount,\n      shouldRunAI\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        96
+      ],
+      "id": "47c84c2a-6d0a-4252-ad8d-daf2663097e5",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU",
+          "mode": "list",
+          "cachedResultName": "Hostel Reviews",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mac Donald Hall",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VmhPS0OducpBq4K6eyi5wXzNMDZNKYadLua3vZMsYNU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Summary": "={{ $json.SUMMARY }}"
+          },
+          "matchingColumns": [
+            "Summary"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Breakfast",
+              "displayName": "Breakfast",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "BRating",
+              "displayName": "BRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lunch",
+              "displayName": "Lunch",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "LRating",
+              "displayName": "LRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Dinner",
+              "displayName": "Dinner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "DRating",
+              "displayName": "DRating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Write Mac Sheet1",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1296,
+        384
+      ],
+      "id": "06cdc9f9-4cb7-4fd6-b43c-90126f31dd30",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LmYhGFvY7t3ZEGY6",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Reviews": {
+      "main": [
+        [
+          {
+            "node": "Switch Hostel1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Mac Sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check ≥5 Reviews": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Write Mac Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Hostel1": {
+      "main": [
+        [
+          {
+            "node": "Write Mac Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write Sen Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Sen Sheet": {
+      "main": [
+        [
+          {
+            "node": "Read Sen Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Mac Sheet": {
+      "main": [
+        [
+          {
+            "node": "Read Mac Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sen Sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Check ≥5 Reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4e3e4b89-1236-40a8-9471-99fc7d7b629c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21a61ffbf78751d1d0efddbc934565466beae5750b27404d017e493a64ee2176"
+  },
+  "id": "kRihUjNK4iRw36et",
+  "tags": []
+}
