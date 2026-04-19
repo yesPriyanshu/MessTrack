@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MessTrack — IIEST Shibpur Hostel Mess Portal</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts: Sora (display) + DM Sans (body) -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══ CSS VARIABLES ═══ */
+    :root { --orange:#f97316; --navy:#0f172a; --bg:#f8fafc; --border:#e2e8f0; }
+    * { box-sizing:border-box; }
+
+    body {
+      font-family:'DM Sans',sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(circle at 12% 0%,  #fff7ed 0%, transparent 38%),
+        radial-gradient(circle at 88% 100%, #eff6ff 0%, transparent 38%);
+      background-attachment:fixed;
+      min-height:100vh; color:var(--navy);
+    }
+    h1,h2,h3,.fd { font-family:'Sora',sans-serif; }
+
+    /* ── Pages ── */
+    .page { display:none; }
+    .page.active { display:block; animation:fadeUp .38s ease forwards; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Navbar ── */
+    .navbar { background:rgba(15,23,42,.97); backdrop-filter:blur(12px); position:sticky; top:0; z-index:50; }
+
+    /* ── Cards ── */
+    .card { background:#fff; border:1px solid var(--border); border-radius:1.25rem; transition:transform .22s,box-shadow .22s; }
+    .hcard { cursor:pointer; position:relative; overflow:hidden; }
+    .hcard::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#f97316,#fb923c); transform:scaleX(0); transform-origin:left; transition:transform .28s; }
+    .hcard:hover::before { transform:scaleX(1); }
+    .hcard:hover { transform:translateY(-5px); box-shadow:0 20px 45px rgba(0,0,0,.1); border-color:#fbbf24; }
+
+    /* ── Meal card ── */
+    .meal-card { border-radius:1rem; padding:1.15rem; border:1px solid var(--border); transition:box-shadow .2s; }
+    .meal-card:hover { box-shadow:0 6px 20px rgba(0,0,0,.07); }
+
+    /* ── Modal ── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(5px); z-index:100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal-box { background:#fff; border-radius:1.5rem; padding:2rem; width:92%; max-width:540px; max-height:88vh; overflow-y:auto; transform:scale(.9) translateY(20px); transition:transform .3s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.2); }
+    .modal-overlay.open .modal-box { transform:scale(1) translateY(0); }
+
+    /* ── Stars ── */
+    .star-btn { font-size:1.4rem; cursor:pointer; color:#d1d5db; transition:transform .12s; }
+    .star-btn.filled { color:#f59e0b; }
+    .star-btn:hover { transform:scale(1.25); }
+
+    /* ── Section tag ── */
+    .stag { display:inline-flex; align-items:center; gap:5px; font-size:.69rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange); background:#fff7ed; border:1px solid #fed7aa; padding:2px 9px; border-radius:99px; margin-bottom:.5rem; }
+
+    /* ── Rating badges ── */
+    .r-green  { background:#dcfce7; color:#166534; }
+    .r-yellow { background:#fef9c3; color:#854d0e; }
+    .r-red    { background:#fee2e2; color:#991b1b; }
+
+    /* ── Waste bars ── */
+    .wbar { height:9px; border-radius:99px; transition:width .7s ease; }
+    .wl { background:#22c55e; } .wm { background:#f59e0b; } .wh { background:#ef4444; }
+
+    /* ── Budget bar ── */
+    .bbar { height:12px; border-radius:99px; background:#e2e8f0; overflow:hidden; }
+    .bfill        { height:100%; border-radius:99px; background:linear-gradient(90deg,#22c55e,#86efac); transition:width .9s; }
+    .bfill.warn   { background:linear-gradient(90deg,#f59e0b,#fcd34d); }
+    .bfill.danger { background:linear-gradient(90deg,#ef4444,#fca5a5); }
+
+    /* ── Section divider ── */
+    .sec-head { display:flex; align-items:center; gap:10px; margin-bottom:1rem; }
+    .sec-head::after { content:''; flex:1; height:1px; background:#e2e8f0; }
+
+    /* ── Expense table ── */
+    .exp-table th { background:#f8fafc; font-size:.69rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:#64748b; }
+
+    /* ── Stagger ── */
+    .sg { opacity:0; animation:fadeUp .35s ease forwards; }
+    .sg:nth-child(1){animation-delay:.05s} .sg:nth-child(2){animation-delay:.10s}
+    .sg:nth-child(3){animation-delay:.15s} .sg:nth-child(4){animation-delay:.20s}
+    .sg:nth-child(5){animation-delay:.25s} .sg:nth-child(6){animation-delay:.30s}
+    .sg:nth-child(7){animation-delay:.35s} .sg:nth-child(8){animation-delay:.40s}
+    .sg:nth-child(9){animation-delay:.45s} .sg:nth-child(10){animation-delay:.50s}
+    .sg:nth-child(11){animation-delay:.55s} .sg:nth-child(12){animation-delay:.60s}
+    .sg:nth-child(13){animation-delay:.65s} .sg:nth-child(14){animation-delay:.70s}
+    .sg:nth-child(15){animation-delay:.75s} .sg:nth-child(16){animation-delay:.80s}
+
+    /* ── Feature card ── */
+    .feat-card { background:#fff; border:1px solid var(--border); border-radius:1rem; padding:1.25rem; transition:box-shadow .2s,transform .2s; }
+    .feat-card:hover { box-shadow:0 8px 24px rgba(0,0,0,.07); transform:translateY(-3px); }
+
+    /* ── Canteen menu item ── */
+    .menu-item { display:flex; align-items:flex-start; justify-content:space-between; padding:.9rem 1rem; border-radius:.9rem; border:1px solid var(--border); background:#fff; transition:box-shadow .2s,border-color .2s; gap:1rem; }
+    .menu-item:hover { box-shadow:0 4px 14px rgba(0,0,0,.06); border-color:#fed7aa; }
+
+    /* ── Coming soon inline label ── */
+    .inline-soon { font-size:.72rem; color:#f97316; font-weight:600; padding:.25rem .6rem; background:#fff7ed; border:1px solid #fed7aa; border-radius:.45rem; margin-top:.35rem; display:none; white-space:nowrap; animation:fadeUp .2s ease; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:#f1f5f9; }
+    ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; }
+
+    /* ── Footer ── */
+    footer { background:rgba(15,23,42,.98); color:#94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav class="navbar px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+
+  <!-- LEFT: Logo + Canteens -->
+  <div class="flex items-center gap-3">
+    <button onclick="showPage('home')" class="flex items-center gap-2 group">
+      <span class="text-xl">🏠</span>
+      <span class="fd font-bold text-white text-base tracking-tight group-hover:text-orange-400 transition-colors">MessTrack</span>
+    </button>
+  </div>
+
+  <!-- RIGHT: Date + JMCR -->
+  <div class="flex items-center gap-2 flex-wrap">
+    <span id="nav-date" class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs hidden sm:inline"></span>
+    <a href="admin.html"
+      class="text-xs font-bold px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all shadow">
+      🔐 JMCR Login
+    </a>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════ PAGE: HOME ═══════════════════ -->
+<div id="page-home" class="page active">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Hero -->
+    <div class="text-center mb-8">
+      <div class="inline-block bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full mb-3">
+        IIEST Shibpur — Est. 1856
+      </div>
+      <h1 class="text-3xl sm:text-5xl fd font-extrabold text-slate-900 leading-tight">
+        Hostel Mess <span class="text-orange-500">Management</span>
+      </h1>
+      <p class="mt-2 text-slate-500 text-sm max-w-lg mx-auto">Track daily menus, food waste, mess ratings, and monthly expenses for all hostels and halls.</p>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="grid grid-cols-3 gap-3 mb-9">
+      <div class="card p-4 text-center shadow-sm"><div class="text-2xl fd font-extrabold text-orange-500">16</div><div class="text-xs text-slate-500 mt-0.5">Hostels &amp; Halls</div></div>
+      <div class="card p-4 text-center shadow-sm"><div class="text-2xl fd font-extrabold text-green-600">3</div><div class="text-xs text-slate-500 mt-0.5">Meals / Day</div></div>
+      <div class="card p-4 text-center shadow-sm"><div class="text-2xl fd font-extrabold text-blue-600">₹20K</div><div class="text-xs text-slate-500 mt-0.5">Mess Budget</div></div>
+    </div>
+
+    <!-- Halls -->
+    <div class="sec-head"><span class="fd font-bold text-slate-700 text-sm whitespace-nowrap">🏛️ Halls of Residence</span></div>
+    <div id="grid-halls"   class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-9"></div>
+
+    <!-- PG -->
+    <div class="sec-head"><span class="fd font-bold text-slate-700 text-sm whitespace-nowrap">🎓 Post Graduate</span></div>
+    <div id="grid-pg"      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-9"></div>
+
+    <!-- Hostels -->
+    <div class="sec-head"><span class="fd font-bold text-slate-700 text-sm whitespace-nowrap">🏢 Hostels</span></div>
+    <div id="grid-hostels" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12"></div>
+	<!-- Canteens -->
+<div class="sec-head"><span class="fd font-bold text-slate-700 text-sm whitespace-nowrap">🍽️ Campus Canteens</span></div>
+<div id="canteen-grid-home" class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-12"></div>
+
+    <!-- Features -->
+    <div class="sec-head"><span class="fd font-bold text-slate-700 text-sm whitespace-nowrap">✨ Platform Features</span></div>
+    <p class="text-sm text-slate-400 mb-5">What the MessTrack management system offers</p>
+    <div id="features-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4"></div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════ PAGE: CANTEENS ═══════════════════ -->
+<div id="page-canteens" class="page">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <button onclick="showPage('home')" class="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-orange-500 transition-colors mb-6">← Home</button>
+    <div class="text-center mb-8">
+      <div class="stag">🍽️ Campus Dining</div>
+      <h2 class="fd font-extrabold text-3xl text-slate-800">Campus Canteens</h2>
+      <p class="text-sm text-slate-400 mt-2">Explore menus across all IIEST Shibpur canteens</p>
+    </div>
+    <div id="canteen-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-5"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ PAGE: CANTEEN DETAIL ═══════════════════ -->
+<div id="page-canteen-detail" class="page">
+  <div class="max-w-2xl mx-auto px-4 py-8">
+    <button onclick="showPage('canteens')" class="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-orange-500 transition-colors mb-6">← All Canteens</button>
+    <div id="canteen-detail-content"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ PAGE: HOSTEL DETAIL ═══════════════════ -->
+<div id="page-hostel" class="page">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+
+    <!-- Top nav -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <button onclick="showPage('home')" class="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-orange-500 transition-colors">← All Hostels</button>
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="openYesterdayModal()"
+          class="bg-white border border-slate-200 hover:border-orange-400 hover:text-orange-600 text-slate-700 font-semibold text-xs px-3 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1">
+          📋 Yesterday's Menu Review
+        </button>
+        <button onclick="showPage('expenses')"
+          class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md flex items-center gap-1">
+          💰 Monthly Expenses (Live)
+        </button>
+      </div>
+    </div>
+
+    <div id="hostel-header" class="card p-6 mb-5 shadow-sm"></div>
+
+    <div class="mb-5">
+      <div class="stag">🍽️ Today's Menu</div>
+      <div id="todays-menu" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+      <div id="fav-food"    class="card p-5 shadow-sm"></div>
+      <div id="mess-rating" class="card p-5 shadow-sm"></div>
+    </div>
+
+    <div class="mb-5">
+      <div class="stag">♻️ Food Waste Indicator</div>
+      <div id="food-waste" class="card p-5 mt-2 shadow-sm"></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════ PAGE: EXPENSES ═══════════════════ -->
+<div id="page-expenses" class="page">
+  <div class="max-w-3xl mx-auto px-4 py-8">
+
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <button onclick="showPage('hostel')" class="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-orange-500 transition-colors">← Hostel Detail</button>
+      <h2 class="fd font-bold text-2xl text-slate-800">Monthly Expenses</h2>
+    </div>
+
+    <div class="card p-5 mb-5 shadow-sm">
+      <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">Select Month</label>
+      <select id="month-select" onchange="renderExpenses()"
+        class="w-full sm:w-auto border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+        <option value="0">January</option>
+        <option value="1">February</option>
+        <option value="2">March</option>
+        <option value="3" selected>April</option>
+      </select>
+    </div>
+
+    <div id="expenses-table-container" class="card p-5 shadow-sm mb-5"></div>
+    <div id="budget-summary"           class="card p-5 shadow-sm"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ MODAL: Yesterday's Review ═══════════════════ -->
+<div id="yesterday-modal" class="modal-overlay" onclick="closeModalOutside(event,'yesterday-modal')">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h3 class="fd font-bold text-xl text-slate-800">📋 Yesterday's Menu Review</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Your ratings help improve meal quality</p>
+      </div>
+      <button onclick="closeModal('yesterday-modal')" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+    </div>
+    <div id="yesterday-content"></div>
+    <button onclick="submitReview()"
+      class="mt-5 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors text-sm">
+      Submit Review ✓
+    </button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="toast" class="fixed bottom-6 right-6 z-[200] text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 bg-green-600">✓ Done!</div>
+
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="mt-16 py-8 px-4 text-center">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-slate-500 text-xs mb-1">MessTrack Management Portal</div>
+    <div class="text-slate-400 text-xs">
+      Designed with <span class="text-red-400">♥</span> by <span class="font-semibold text-slate-300">Priyanshu</span>
+    </div>
+    <div class="mt-2 text-slate-600 text-xs">© 2026 MessTrack. All rights reserved.</div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+
+/* ══════════════════════════════════════════════
+   n8n WEBHOOK  — replace with your actual URL
+══════════════════════════════════════════════ */
+const N8N_WEBHOOK_URL = 'https://raj61.app.n8n.cloud/webhook-test/mess-review-webhook';
+
+/* ══════════════════════════════════════════════
+   DETERMINISTIC SEEDED RANDOM (FNV-1a hash)
+   Same string always → same number. No refresh changes.
+══════════════════════════════════════════════ */
+function fnv32(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+// Pick item from array using seed
+function sp(arr, seed) { return arr[fnv32(seed) % arr.length]; }
+// Float in [min,max] using seed
+function sf(seed, min, max, d=1) { return parseFloat((min + (fnv32(seed)/0xFFFFFFFF)*(max-min)).toFixed(d)); }
+
+
+/* ══════════════════════════════════════════════
+   DATA: HOSTELS  — order: Halls → PG → Hostels
+══════════════════════════════════════════════ */
+const HOSTELS = [
+  // ── Halls of Residence ──
+  { id:'mcd',  name:'Mac Donald Hall',     gender:'boys',  icon:'🏛️', type:'hall'   },
+  { id:'rich', name:'Richardson Hall',     gender:'boys',  icon:'🏛️', type:'hall'   },
+  { id:'sen',  name:'Sen Hall',            gender:'boys',  icon:'🏛️', type:'hall'   },
+  { id:'seng', name:'Sen Gupta Hall',      gender:'boys',  icon:'🏛️', type:'hall'   },
+  { id:'pan',  name:'Pandaya Hall',        gender:'girls', icon:'🌸',  type:'hall'   },
+  { id:'wolf', name:'Wolfenden Hall',      gender:'boys',  icon:'🏛️', type:'hall'   },
+  { id:'ltw',  name:'Lt. Williams',        gender:'girls', icon:'🌸',  type:'hall'   },
+  { id:'niv',  name:'Nivedita Hall',       gender:'girls', icon:'🌸',  type:'hall'   },
+  // ── Post Graduate ──
+  { id:'pg13', name:'PG Hostel - 13',      gender:'boys',  icon:'🎓',  type:'pg'     },
+  // ── Hostels ──
+  { id:'h7',   name:'Hostel 7',            gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h8',   name:'Hostel 8',            gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h9',   name:'Hostel 9',            gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h10',  name:'Hostel 10',           gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h14',  name:'Hostel 14',           gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h15',  name:'Hostel 15',           gender:'boys',  icon:'🏢',  type:'hostel' },
+  { id:'h16',  name:'Hostel 16',           gender:'boys',  icon:'🏢',  type:'hostel' },
+];
+
+/* ══════════════════════════════════════════════
+   DATA: MENU OPTIONS
+══════════════════════════════════════════════ */
+const BF_OPTS   = ['Dosa','Pasta','Idli','Sandwich + Banana','Uttapam','Chole Bhature','Puri Sabji','Pav Bhaji','Cornflakes + Milk'];
+const LCH_SIDES = ['Fish','Egg Curry','Jackfruit','Aloo Dum','Bhindi','Ghugni','Choley','Cabbage'];
+const DIN_BASE  = ['Chicken Curry','Paneer','Soyabean','Mixveg','Aloo Posto'];
+const DIN_NOBAS = ['Chicken Biryani','Veg Biryani','Jeera Rice + Chicken Hariyali'];
+
+/* ══════════════════════════════════════════════
+   GENERATE MENU — fully deterministic per hostel
+   (today's and yesterday's — never changes on refresh)
+══════════════════════════════════════════════ */
+function getMenu(hid) {
+  const breakfast  = sp(BF_OPTS,   hid+'-bf');
+  const lunchSide  = sp(LCH_SIDES, hid+'-lch');
+  const lunch      = 'Roti + Dal + Rice · '+lunchSide;
+  const hasBase    = (fnv32(hid+'-dcoin') % 10) < 6;
+  const dinner     = hasBase ? sp(DIN_BASE, hid+'-din') : sp(DIN_NOBAS, hid+'-din');
+  const dinnerFull = hasBase ? 'Roti + Dal + Rice · '+dinner : dinner;
+  return { breakfast, lunch, lunchSide, dinner, dinnerFull, hasBase };
+}
+
+function getYesterdayMenu(hid) {
+  const breakfast  = sp(BF_OPTS,   hid+'-yd-bf');
+  const lunchSide  = sp(LCH_SIDES, hid+'-yd-lch');
+  const lunch      = 'Roti + Dal + Rice · '+lunchSide;
+  const hasBase    = (fnv32(hid+'-yd-dc') % 10) < 6;
+  const dinner     = hasBase ? sp(DIN_BASE, hid+'-yd-din') : sp(DIN_NOBAS, hid+'-yd-din');
+  const dinnerFull = hasBase ? 'Roti + Dal + Rice · '+dinner : dinner;
+  return { breakfast, lunch, dinnerFull };
+}
+
+/* ══════════════════════════════════════════════
+   WASTE — deterministic per hostel
+══════════════════════════════════════════════ */
+function getWaste(hid) {
+  const classify = (kg, max) => {
+    const pct = (kg/max)*100;
+    return { kg, pct, level: pct<33?'LOW':pct<66?'MEDIUM':'HIGH' };
+  };
+  return [
+    classify(sf(hid+'-wb', 0,   1.5), 1.5),  // Breakfast
+    classify(sf(hid+'-wl', 0.2, 3  ), 3  ),  // Lunch
+    classify(sf(hid+'-wd', 0.4, 4  ), 4  ),  // Dinner
+  ];
+}
+
+/* ══════════════════════════════════════════════
+   MESS RATING — seeded, 2.0–5.0
+══════════════════════════════════════════════ */
+function getRating(hid) {
+  return parseFloat((2 + (fnv32(hid+'-rat')/0xFFFFFFFF)*3).toFixed(1));
+}
+
+/* ══════════════════════════════════════════════
+   FAVOURITE FOOD — seeded (Breakfast or Dinner only)
+══════════════════════════════════════════════ */
+function getFav(hid) {
+  const m = getMenu(hid);
+  return {
+    dish:   sp([m.breakfast, m.dinner], hid+'-fav'),
+    rating: sf(hid+'-favr', 4.4, 5.0)
+  };
+}
+
+/* ══════════════════════════════════════════════
+   DATA: EXPENSES — hardcoded for consistency
+   Gas bills: 440–720 (all within 400–750)
+   All items ≥ ₹120. Totals: Jan 4500, Feb 4200, Mar 4450, Apr 1900
+   Grand total = 15050  →  Remaining = ₹4,950 (< ₹5,000 ✓)
+══════════════════════════════════════════════ */
+const EXPENSE_DATA = [
+  { label:'January',  isPartial:false,
+    rows:[{name:'Gas',amount:680},{name:'Milk',amount:540},{name:'Vegetables',amount:800},
+          {name:'Chicken',amount:880},{name:'Paneer',amount:450},{name:'Grocery',amount:940},{name:'Eggs',amount:210}]
+  },
+  { label:'February', isPartial:false,
+    rows:[{name:'Gas',amount:600},{name:'Milk',amount:510},{name:'Vegetables',amount:740},
+          {name:'Chicken',amount:820},{name:'Paneer',amount:420},{name:'Grocery',amount:890},{name:'Eggs',amount:220}]
+  },
+  { label:'March',    isPartial:false,
+    rows:[{name:'Gas',amount:720},{name:'Milk',amount:555},{name:'Vegetables',amount:820},
+          {name:'Chicken',amount:850},{name:'Paneer',amount:455},{name:'Grocery',amount:830},{name:'Eggs',amount:220}]
+  },
+  { label:'April',    isPartial:true,
+    rows:[{name:'Gas',amount:440},{name:'Groceries',amount:720},{name:'Eggs',amount:195},{name:'Vegetables',amount:545}]
+  },
+];
+const MESS_BUDGET = 20000;
+
+/* ══════════════════════════════════════════════
+   DATA: CANTEENS
+══════════════════════════════════════════════ */
+const CANTEENS = [
+  { id:'cafe-inn', name:'Cafe Inn', icon:'☕',
+    tagClass:'bg-amber-50 border-amber-200 text-amber-700',
+    desc:'A cozy café serving fresh beverages, crispy snacks, and quick comfort bites on campus.',
+    menu:[{item:'Veg Burger + Fries',price:65},{item:'Cold Coffee (Large)',price:55},
+          {item:'French Fries (Loaded)',price:75},{item:'Pasta Arrabbiata',price:90},{item:'Chicken Club Sandwich',price:110}]
+  },
+  { id:'students', name:"Student's Canteen", icon:'🍛',
+    tagClass:'bg-green-50 border-green-200 text-green-700',
+    desc:'Budget-friendly, wholesome meals crafted daily for the student community at Shibpur.',
+    menu:[{item:'Masala Dosa + Chutney',price:55},{item:'Egg Roll',price:60},
+          {item:'Veg Thali (full)',price:80},{item:'Chicken Chowmein',price:90},{item:'Tea + Biscuits',price:40}]
+  },
+  { id:'ladies', name:'University Canteen (Ladies Canteen)', icon:'🌸',
+    tagClass:'bg-pink-50 border-pink-200 text-pink-700',
+    desc:'A welcoming space offering homestyle South Indian and Bengali cooking for the whole campus.',
+    menu:[{item:'Idli Sambar (4 pcs)',price:50},{item:'Upma Bowl',price:45},
+          {item:'Veg Biryani',price:80},{item:'Lemon Rice + Papad',price:55},{item:'Filter Coffee',price:40}]
+  },
+  { id:'institute', name:'Institute Canteen', icon:'🏫',
+    tagClass:'bg-blue-50 border-blue-200 text-blue-700',
+    desc:'Full meals and à la carte options for students, faculty, and campus staff.',
+    menu:[{item:'Chicken Biryani (Half)',price:120},{item:'Paneer Butter Masala + Roti',price:100},
+          {item:'Dal Makhani + Steam Rice',price:75},{item:'Mixed Veg Thali',price:85},{item:'Egg Curry + Rice',price:70}]
+  },
+];
+
+/* ══════════════════════════════════════════════
+   DATA: FEATURES
+══════════════════════════════════════════════ */
+const FEATURES = [
+  { icon:'♻️', title:'Controlling Food Wastage',
+    desc:'Real-time waste indicators per meal help identify and systematically reduce daily food loss across all mess units.' },
+  { icon:'🤖', title:'AI-Generated Daily Reports',
+    desc:'Auto-compiled catering quality reports based on resident star-reviews help caterers improve meal standards over time.' },
+  { icon:'🔍', title:'Encouraging Transparency',
+    desc:'Publicly visible itemized expense breakdowns, live ratings, and daily menus keep mess operations accountable to all residents.' },
+  { icon:'📅', title:'LIVE Expense Tracking',
+    desc:'Month-wise itemized expense records with budget-progress bars keep the annual ₹20,000 mess fund visible and well-managed.' },
+  { icon:'🍽️', title:'Campus Canteen Discovery',
+    desc:'Browse menus across all four campus canteens — online meal pre-booking capability coming soon.' },
+  { icon:'📊', title:'Data-Driven Procurement',
+    desc:'Waste logs and meal ratings together guides AI to suggest smarter ingredient purchasing for efficient, cost-effective mess management.' },
+];
+
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+let currentHostelId  = null;
+let currentCanteenId = null;
+
+/* ══════════════════════════════════════════════
+   PAGE ROUTING
+══════════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER: HOME — hostel grids (Halls / PG / Hostels)
+══════════════════════════════════════════════ */
+function renderHome() {
+  const groups = { hall:[], pg:[], hostel:[] };
+  HOSTELS.forEach(h => groups[h.type].push(h));
+
+  const makeCard = h => {
+    const m   = getMenu(h.id);
+    const r   = getRating(h.id);
+    const isG = h.gender === 'girls';
+    const gbadge = isG
+      ? 'bg-pink-50 text-pink-600 border-pink-200'
+      : 'bg-blue-50 text-blue-600 border-blue-200';
+    return `
+      <div class="card hcard sg p-5" onclick="openHostel('${h.id}')">
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-3xl">${h.icon}</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full border ${gbadge}">${isG?'♀ Girls':'♂ Boys'}</span>
+        </div>
+        <h3 class="fd font-bold text-lg text-slate-800 leading-tight mb-0.5">${h.name}</h3>
+        <p class="text-xs text-slate-400 mb-3">Tap to view mess details</p>
+        <div class="border-t border-slate-100 pt-3 space-y-1">
+          <div class="text-xs text-slate-500"><span class="font-semibold text-slate-700">Breakfast:</span> ${m.breakfast}</div>
+          <div class="text-xs text-slate-400">Rating: <span class="font-semibold text-amber-600">${r.toFixed(1)} ⭐</span></div>
+        </div>
+        <div class="mt-3 flex justify-end"><span class="text-xs font-bold text-orange-500">View Details →</span></div>
+      </div>`;
+  };
+
+  document.getElementById('grid-halls').innerHTML   = groups.hall.map(makeCard).join('');
+  document.getElementById('grid-pg').innerHTML      = groups.pg.map(makeCard).join('');
+  document.getElementById('grid-hostels').innerHTML = groups.hostel.map(makeCard).join('');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER: FEATURES
+══════════════════════════════════════════════ */
+function renderFeatures() {
+  document.getElementById('features-grid').innerHTML = FEATURES.map((f,i) => `
+    <div class="feat-card sg" style="animation-delay:${(i*.06).toFixed(2)}s">
+      <div class="text-2xl mb-2">${f.icon}</div>
+      <div class="fd font-bold text-slate-800 text-sm mb-1">${f.title}</div>
+      <div class="text-xs text-slate-500 leading-relaxed">${f.desc}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER: CANTEEN GRID (inline on home page)
+══════════════════════════════════════════════ */
+function renderCanteens() {
+  document.getElementById('canteen-grid-home').innerHTML = CANTEENS.map(c => `
+    <div class="card hcard sg p-5" onclick="openCanteen('${c.id}')">
+      <div class="flex items-start justify-between mb-3">
+        <span class="text-4xl">${c.icon}</span>
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full border ${c.tagClass}">${c.menu.length} items</span>
+      </div>
+      <h3 class="fd font-bold text-lg text-slate-800 leading-tight mb-1">${c.name}</h3>
+      <p class="text-xs text-slate-400 leading-snug mb-3">${c.desc}</p>
+      <div class="border-t border-slate-100 pt-3 flex justify-between items-center">
+        <div class="text-xs text-slate-500">From <span class="font-bold text-slate-700">₹${Math.min(...c.menu.map(m => m.price))}</span></div>
+        <span class="text-xs font-bold text-orange-500">View Menu →</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════
+   OPEN: CANTEEN DETAIL PAGE
+══════════════════════════════════════════════ */
+function openCanteen(cid) {
+  const c = CANTEENS.find(x => x.id === cid);
+
+  document.getElementById('canteen-detail-content').innerHTML = `
+    <div class="card p-6 mb-5 shadow-sm">
+      <div class="flex items-center gap-4">
+        <span class="text-5xl">${c.icon}</span>
+        <div>
+          <div class="stag">🍽️ Campus Canteen</div>
+          <h2 class="fd font-extrabold text-2xl text-slate-800">${c.name}</h2>
+          <p class="text-sm text-slate-500 mt-1">${c.desc}</p>
+        </div>
+      </div>
+    </div>
+    <div class="stag">📋 Today's Menu</div>
+    <div class="space-y-3 mt-2">
+      ${c.menu.map(item => `
+        <div class="menu-item">
+          <div class="font-semibold text-slate-800 text-sm">${item.item}</div>
+          <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+            <span class="font-bold text-orange-600 text-base">₹${item.price}</span>
+            <button onclick="showComingSoon(this)"
+              class="text-xs bg-orange-500 hover:bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg transition-colors whitespace-nowrap">
+              Pay &amp; Book Meal
+            </button>
+            <span class="inline-soon">🚧 This feature is coming soon...</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  showPage('canteen-detail');
+}
+
+// Shows "coming soon" label under the clicked button for 3 seconds
+function showComingSoon(btn) {
+  const lbl = btn.nextElementSibling;
+  lbl.style.display = 'block';
+  setTimeout(() => { lbl.style.display = 'none'; }, 3000);
+}
+/* ══════════════════════════════════════════════
+   OPEN: HOSTEL DETAIL
+══════════════════════════════════════════════ */
+function openHostel(hid) {
+  currentHostelId = hid;
+  const h     = HOSTELS.find(x => x.id === hid);
+  const m     = getMenu(hid);
+  const rat   = getRating(hid);
+  const fav   = getFav(hid);
+  const waste = getWaste(hid);
+  const isG   = h.gender === 'girls';
+
+  // ─ Header ─
+  document.getElementById('hostel-header').innerHTML = `
+    <div class="flex items-center gap-4">
+      <span class="text-5xl">${h.icon}</span>
+      <div>
+        <div class="stag">Hostel Detail</div>
+        <h2 class="fd font-extrabold text-2xl text-slate-800">${h.name}</h2>
+        <p class="text-sm text-slate-500 mt-1">
+          ${isG
+            ? '🌸 <strong>Girls\' Hostel</strong> — A dedicated residential hall for women students, managed by the Student Welfare Wing with 24×7 security, a supervised mess, and on-campus amenities.'
+            : '🏠 <strong>Boys\' Hostel</strong> — A residential hall for male students managed by the Hall Management Committee, with a student-run mess, sports facilities, and an active cultural life.'}
+        </p>
+      </div>
+    </div>`;
+
+  // ─ Today's Menu ─
+  const mealDefs = [
+    { label:'Breakfast', time:'8:00 AM – 11:00 AM', icon:'🌅', text:m.breakfast, grad:'from-amber-50 to-orange-50', border:'border-amber-200', tag:'bg-amber-100 text-amber-800' },
+    { label:'Lunch',     time:'12:00 PM – 2:00 PM', icon:'☀️', text:m.lunch,     grad:'from-green-50 to-emerald-50', border:'border-green-200', tag:'bg-green-100 text-green-800' },
+    { label:'Dinner',    time:'9:00 PM – 10:00 PM', icon:'🌙', text:m.dinnerFull, grad:'from-blue-50 to-indigo-50', border:'border-blue-200', tag:'bg-blue-100 text-blue-800' },
+  ];
+  document.getElementById('todays-menu').innerHTML = mealDefs.map(md => `
+    <div class="meal-card bg-gradient-to-br ${md.grad} border ${md.border}">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xl">${md.icon}</span>
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${md.tag}">${md.time}</span>
+      </div>
+      <div class="fd font-bold text-slate-700 text-base mb-1">${md.label}</div>
+      <div class="text-sm text-slate-600 leading-snug">${md.text}</div>
+    </div>`).join('');
+
+  // ─ Favourite Food ─
+  const fStars = Math.round(fav.rating);
+  document.getElementById('fav-food').innerHTML = `
+    <div class="stag">⭐ Last Week's Favourite</div>
+    <div class="flex items-center gap-3 mt-3">
+      <span class="text-4xl">🏆</span>
+      <div>
+        <div class="fd font-bold text-xl text-slate-800">${fav.dish}</div>
+        <div class="flex items-center gap-0.5 mt-1">
+          <span class="text-amber-500">${'★'.repeat(fStars)}${'☆'.repeat(5-fStars)}</span>
+          <span class="text-sm font-bold text-amber-600 ml-1">${fav.rating.toFixed(1)} / 5</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-0.5">Most liked dish by residents</div>
+      </div>
+    </div>`;
+
+  // ─ Mess Rating ─
+  let rclass, rlabel;
+  if (rat < 3)      { rclass='r-red';    rlabel='Needs Improvement'; }
+  else if (rat < 4) { rclass='r-yellow'; rlabel='Average'; }
+  else              { rclass='r-green';  rlabel='Excellent'; }
+  const fS = Math.floor(rat), hStar = (rat-fS) >= 0.5;
+  const starsHtml = '★'.repeat(fS) + (hStar?'⯨':'') + '☆'.repeat(5-fS-(hStar?1:0));
+  document.getElementById('mess-rating').innerHTML = `
+    <div class="stag">📊 Mess Rating</div>
+    <div class="mt-2 flex items-end gap-2">
+      <span class="fd font-extrabold text-5xl text-slate-800">${rat.toFixed(1)}</span>
+      <span class="text-slate-400 text-lg mb-1">/ 5</span>
+    </div>
+    <div class="text-amber-500 text-xl tracking-wide mt-1">${starsHtml}</div>
+    <div class="mt-2"><span class="inline-block text-xs font-bold px-3 py-1 rounded-full ${rclass}">${rlabel}</span></div>
+    <div class="mt-3 bg-slate-100 rounded-full h-2 overflow-hidden">
+      <div class="h-2 rounded-full bg-gradient-to-r from-orange-400 to-amber-400" style="width:${(rat/5*100).toFixed(1)}%"></div>
+    </div>`;
+
+  // ─ Food Waste ─
+  const wMeals = ['Breakfast','Lunch','Dinner'];
+  document.getElementById('food-waste').innerHTML = `
+    <div class="space-y-4">
+      ${waste.map((w,i) => `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-semibold text-slate-700">${wMeals[i]}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-slate-600">${w.kg.toFixed(1)} kg</span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full
+                ${w.level==='LOW'?'bg-green-100 text-green-700':w.level==='MEDIUM'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}">
+                ${w.level}
+              </span>
+            </div>
+          </div>
+          <div class="bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div class="wbar ${w.level==='LOW'?'wl':w.level==='MEDIUM'?'wm':'wh'}" style="width:${w.pct.toFixed(1)}%"></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  showPage('hostel');
+}
+
+/* ══════════════════════════════════════════════
+   MODAL: Yesterday's Review
+══════════════════════════════════════════════ */
+function openYesterdayModal() {
+  const hostel = HOSTELS.find(h => h.id === currentHostelId);
+  const menu   = getYesterdayMenu(currentHostelId);
+  const yd     = new Date(); yd.setDate(yd.getDate()-1);
+  const dayStr = yd.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+
+  document.getElementById('yesterday-content').innerHTML = `
+    <div class="bg-slate-50 rounded-xl px-4 py-2 mb-4 text-xs text-slate-500">
+      Menu for <strong>${dayStr}</strong> — <strong>${hostel?.name}</strong>
+    </div>
+    ${[{label:'Breakfast 🌅',text:menu.breakfast},{label:'Lunch ☀️',text:menu.lunch},{label:'Dinner 🌙',text:menu.dinnerFull}]
+      .map((meal,idx) => `
+        <div class="mb-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="fd font-bold text-slate-700 text-sm mb-0.5">${meal.label}</div>
+          <div class="text-xs text-slate-500 mb-3">${meal.text}</div>
+          <div class="flex gap-1.5 items-center flex-wrap" id="stars-${idx}">
+            ${[1,2,3,4,5].map(s=>`<button class="star-btn" data-val="${s}" onclick="setStars(${idx},${s})">★</button>`).join('')}
+            <span id="rl-${idx}" class="text-xs text-slate-400 ml-1">Tap to rate</span>
+          </div>
+        </div>`).join('')}`;
+
+  document.getElementById('yesterday-modal').classList.add('open');
+}
+
+function setStars(mealIdx, val) {
+  document.getElementById('stars-'+mealIdx)
+    .querySelectorAll('.star-btn')
+    .forEach(b => b.classList.toggle('filled', parseInt(b.dataset.val) <= val));
+  const labels = ['😞 Poor','😐 Fair','🙂 Average','😊 Good','🤩 Excellent'];
+  document.getElementById('rl-'+mealIdx).textContent = `${val}/5 — ${labels[val-1]}`;
+}
+
+// Ordinal suffix helper
+function ordinal(n) {
+  const s=['th','st','nd','rd'], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+
+/* ──────────────────────────────────────────
+   SUBMIT REVIEW → POST to n8n webhook
+   Payload example:
+   {
+     "date":   "19th April 2026",
+     "hostel": "Hostel 15",
+     "reviews":[
+       {"food":"Puri Sabji",            "rating":"2/5"},
+       {"food":"Roti + Dal + Rice · Fish","rating":"3/5"},
+       {"food":"Chicken Biryani",        "rating":"5/5"}
+     ]
+   }
+────────────────────────────────────────── */
+async function submitReview() {
+  const hostel = HOSTELS.find(h => h.id === currentHostelId);
+  const menu   = getYesterdayMenu(currentHostelId);
+  const yd     = new Date(); yd.setDate(yd.getDate()-1);
+  const dateStr = `${ordinal(yd.getDate())} ${yd.toLocaleString('en-IN',{month:'long'})} ${yd.getFullYear()}`;
+
+  const getRat = idx =>
+    document.getElementById('stars-'+idx).querySelectorAll('.star-btn.filled').length || 0;
+
+  const payload = {
+    date:    dateStr,
+    hostel:  hostel?.name || '',
+    reviews: [
+      { food: menu.breakfast,  rating: getRat(0)+'/5' },
+      { food: menu.lunch,      rating: getRat(1)+'/5' },
+      { food: menu.dinnerFull, rating: getRat(2)+'/5' },
+    ]
+  };
+
+  console.log('📤 Sending to n8n:', JSON.stringify(payload, null, 2));
+
+  try {
+    await fetch(N8N_WEBHOOK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+      // Ensure "Respond immediately" is ON in n8n webhook node to avoid CORS timeout
+    });
+  } catch(err) {
+    console.warn('Webhook unreachable (set your URL above):', err.message);
+  }
+
+  closeModal('yesterday-modal');
+  showToast('✅ Review submitted! Thank you.');
+}
+
+/* ══════════════════════════════════════════════
+   RENDER: EXPENSES DASHBOARD
+══════════════════════════════════════════════ */
+function renderExpenses() {
+  const mIdx  = parseInt(document.getElementById('month-select').value);
+  const exp   = EXPENSE_DATA[mIdx];
+  const total = exp.rows.reduce((s,r) => s+r.amount, 0);
+
+  // April: compute real days past / total days
+  let partialBadge = '';
+  if (exp.isPartial) {
+    const now = new Date();
+    const dayPast     = now.getMonth() === 3 ? now.getDate() : 19;
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()===3 ? 4 : 5, 0).getDate();
+    partialBadge = `
+      <div class="flex items-center gap-1.5 mt-1">
+        <span class="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+          📅 ${dayPast}/${daysInMonth} days
+        </span>
+        <span class="text-xs text-slate-400">recorded so far</span>
+      </div>`;
+  }
+
+  document.getElementById('expenses-table-container').innerHTML = `
+    <div class="flex items-start justify-between mb-4 flex-wrap gap-2">
+      <div>
+        <div class="stag">📄 ${exp.label} Expenses</div>
+        ${partialBadge}
+      </div>
+      <span class="fd font-bold text-2xl text-slate-800">₹${total.toLocaleString('en-IN')}</span>
+    </div>
+    <table class="exp-table w-full text-sm border-collapse rounded-xl overflow-hidden">
+      <thead>
+        <tr>
+          <th class="text-left px-4 py-2.5">Item</th>
+          <th class="text-right px-4 py-2.5">Amount</th>
+          <th class="text-right px-4 py-2.5">Share</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${exp.rows.map(r => {
+          const pct = Math.round((r.amount/total)*100);
+          return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-2.5 text-slate-700 font-medium border-t border-slate-100">${r.name}</td>
+            <td class="px-4 py-2.5 text-slate-800 font-bold text-right border-t border-slate-100">₹${r.amount.toLocaleString('en-IN')}</td>
+            <td class="px-4 py-2.5 text-right border-t border-slate-100">
+              <div class="flex items-center justify-end gap-2">
+                <div class="bg-slate-100 rounded-full h-1.5 w-16 overflow-hidden">
+                  <div class="h-1.5 rounded-full bg-orange-400" style="width:${pct}%"></div>
+                </div>
+                <span class="text-xs text-slate-400 w-8 text-right">${pct}%</span>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+        <tr>
+          <td class="px-4 py-3 fd font-extrabold text-slate-800 border-t-2 border-slate-300">Total</td>
+          <td class="px-4 py-3 fd font-extrabold text-orange-600 text-right border-t-2 border-slate-300">₹${total.toLocaleString('en-IN')}</td>
+          <td class="border-t-2 border-slate-300"></td>
+        </tr>
+      </tbody>
+    </table>`;
+
+  // Budget summary
+  const totalSpent = EXPENSE_DATA.reduce((s,e) => s + e.rows.reduce((a,r)=>a+r.amount,0), 0);
+  const remaining  = MESS_BUDGET - totalSpent; // 4950
+  const usedPct    = Math.min((totalSpent/MESS_BUDGET)*100, 100);
+  const fillClass  = usedPct > 80 ? 'danger' : usedPct > 55 ? 'warn' : '';
+
+  document.getElementById('budget-summary').innerHTML = `
+    <div class="stag">💳 Annual Mess Budget (Jan–Apr)</div>
+    <div class="mt-4 space-y-3">
+      <div class="flex justify-between text-sm font-semibold text-slate-600">
+        <span>Total Spent (all months)</span>
+        <span class="text-red-600 font-bold">₹${totalSpent.toLocaleString('en-IN')}</span>
+      </div>
+      <div class="bbar"><div class="bfill ${fillClass}" style="width:${usedPct.toFixed(1)}%"></div></div>
+      <div class="flex justify-between text-xs text-slate-400"><span>₹0</span><span>₹${MESS_BUDGET.toLocaleString('en-IN')}</span></div>
+      <div class="mt-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-green-700 font-bold uppercase tracking-widest">Remaining Balance</div>
+          <div class="fd font-extrabold text-2xl text-green-700 mt-1">
+            ₹${remaining.toLocaleString('en-IN')} / ₹${MESS_BUDGET.toLocaleString('en-IN')}
+          </div>
+        </div>
+        <span class="text-4xl">💰</span>
+      </div>
+      <div class="text-xs text-slate-400 text-center">${usedPct.toFixed(1)}% of annual budget utilized</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════════════ */
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalOutside(e, id) { if(e.target===document.getElementById(id)) closeModal(id); }
+
+/* ══════════════════════════════════════════════
+   TOAST UTILITY
+══════════════════════════════════════════════ */
+function showToast(msg, ms=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, ms);
+}
+
+/* ══════════════════════════════════════════════
+   INIT — runs once on page load
+══════════════════════════════════════════════ */
+(function init() {
+  // Navbar date
+  document.getElementById('nav-date').textContent = new Date().toLocaleDateString('en-IN',{
+    weekday:'short', day:'numeric', month:'short', year:'numeric'
+  });
+  renderHome();
+  renderFeatures();
+  renderCanteens();
+})();
+
+</script>
+</body>
+</html>

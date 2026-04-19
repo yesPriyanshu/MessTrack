@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JMCR Admin Panel — MessTrack</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Same fonts as hostel_mess.html -->
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== CSS VARIABLES (mirror hostel_mess.html) ===== */
+    :root {
+      --saffron: #f97316;
+      --navy: #0f172a;
+      --page-bg: #f8fafc;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--page-bg);
+      background-image:
+        radial-gradient(circle at 20% 0%, #fff7ed 0%, transparent 40%),
+        radial-gradient(circle at 80% 100%, #eff6ff 0%, transparent 40%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--navy);
+    }
+
+    h1, h2, h3, .font-display { font-family: 'Sora', sans-serif; }
+
+    /* ===== PAGE TRANSITIONS ===== */
+    .page { display: none; }
+    .page.active { display: block; animation: fadeSlideIn 0.4s ease forwards; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      background: rgba(15,23,42,0.96);
+      backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    /* ===== MODAL (same pattern as hostel_mess.html) ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: #fff;
+      border-radius: 1.5rem;
+      padding: 2rem;
+      width: 92%;
+      max-width: 520px;
+      max-height: 88vh;
+      overflow-y: auto;
+      transform: scale(0.92) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.2);
+    }
+    .modal-overlay.open .modal-box { transform: scale(1) translateY(0); }
+
+    /* ===== INPUT FIELDS ===== */
+    .field {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      background: #fff;
+    }
+    .field:focus { border-color: #f97316; box-shadow: 0 0 0 3px #fed7aa55; }
+
+    textarea.field { resize: vertical; min-height: 70px; }
+
+    /* ===== SECTION TAG ===== */
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--saffron);
+      background: #fff7ed; border: 1px solid #fed7aa;
+      padding: 3px 10px; border-radius: 99px;
+      margin-bottom: 0.6rem;
+    }
+
+    /* ===== LOGIN CARD ===== */
+    .login-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(15,23,42,0.1);
+    }
+
+    /* ===== ADMIN BUTTON (navbar) ===== */
+    .admin-btn {
+      font-size: 0.75rem; font-weight: 700;
+      padding: 0.35rem 0.85rem;
+      border-radius: 0.6rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      z-index: 200;
+      transition: opacity 0.3s;
+    }
+
+    /* ===== SPLIT AMOUNT REVEAL ===== */
+    .split-result {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1.5px solid #86efac;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      display: none;
+    }
+    .split-result.visible { display: block; animation: fadeSlideIn 0.3s ease forwards; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================
+       NAVBAR
+  ============================= -->
+  <nav class="navbar px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+
+    <!-- LEFT: Logo -->
+    <a href="hostel_mess.html" class="flex items-center gap-3 group">
+      <span class="text-2xl">🏠</span>
+      <span class="font-display font-bold text-white text-lg tracking-tight group-hover:text-orange-400 transition-colors">MessTrack</span>
+      <span class="text-xs text-slate-400 hidden sm:inline">· Hostel Mess Portal</span>
+    </a>
+
+    <!-- RIGHT: Date + JMCR controls -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Live date badge -->
+      <span id="nav-date" class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs"></span>
+
+      <!-- ── LOGGED-OUT STATE ── shown when user is not logged in -->
+      <div id="login-btn-wrap">
+        <button onclick="showPage('login')"
+          class="admin-btn bg-orange-500 hover:bg-orange-600 text-white">
+          🔐 JMCR Login
+        </button>
+      </div>
+
+      <!-- ── LOGGED-IN STATE ── hidden initially, shown after login -->
+      <div id="admin-controls" class="hidden flex items-center gap-2 flex-wrap">
+        <span id="logged-in-label" class="text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-1 rounded-full">✓ JMCR</span>
+        <button onclick="openListMenuModal()"
+          class="admin-btn bg-blue-600 hover:bg-blue-700 text-white">
+          📋 List Menu
+        </button>
+        <button onclick="openSplitModal()"
+          class="admin-btn bg-violet-600 hover:bg-violet-700 text-white">
+          💸 Split Expenses
+        </button>
+        <button onclick="logout()"
+          class="admin-btn bg-slate-700 hover:bg-slate-600 text-slate-200">
+          ⬅ Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+
+  <!-- ============================
+       PAGE: LOGIN
+  ============================= -->
+  <div id="page-login" class="page active">
+    <div class="min-h-screen flex items-center justify-center px-4 py-16">
+      <div class="w-full max-w-md">
+
+        <!-- Back link -->
+        <a href="hostel_mess.html" class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-orange-500 transition-colors mb-6 font-semibold">
+          ← Back to Home
+        </a>
+
+        <div class="login-card">
+          <!-- Header -->
+          <div class="text-center mb-7">
+            <div class="text-5xl mb-3">🔐</div>
+            <h1 class="font-display font-extrabold text-2xl text-slate-800">JMCR Admin Login</h1>
+            <p class="text-sm text-slate-400 mt-1">Joint Mess Control & Review Portal</p>
+          </div>
+
+          <!-- Error message (hidden by default) -->
+          <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5 mb-4 text-center font-semibold">
+            ❌ Incorrect username or password
+          </div>
+
+          <!-- Form -->
+          <div class="space-y-4">
+
+            <!-- Hostel Dropdown -->
+            <div>
+              <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Select Hostel</label>
+              <select id="login-hostel" class="field">
+                <option value="">— Choose your hostel —</option>
+                <option>Hostel 14</option>
+                <option>Hostel 15</option>
+                <option>Hostel 16</option>
+                <option>Mac Donald Hall</option>
+                <option>Richardson Hall</option>
+                <option>Sen Hall</option>
+                <option>Sen Gupta Hall</option>
+                <option>Pandaya Hall</option>
+                <option>Wolfenden Hall</option>
+                <option>Lt. Williams Hostel</option>
+                <option>Nivedita Hall</option>
+                <option>PG Hostel - 13</option>
+                <option>Hostel 9</option>
+                <option>Hostel 10</option>
+              </select>
+            </div>
+
+            <!-- Username -->
+            <div>
+              <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Username</label>
+              <input id="login-user" type="text" class="field" placeholder="e.g. admin" value="admin" />
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Password</label>
+              <div class="relative">
+                <input id="login-pass" type="password" class="field pr-10" placeholder="••••••••" value="admin123" />
+                <button type="button" onclick="togglePass()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm">👁</button>
+              </div>
+            </div>
+
+            <!-- Default hint -->
+            <p class="text-xs text-slate-400 text-center">Default: <span class="font-semibold text-slate-600">admin</span> / <span class="font-semibold text-slate-600">admin123</span></p>
+
+            <!-- Login button -->
+            <button onclick="doLogin()"
+              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-display font-bold py-3 rounded-xl transition-all text-sm shadow-md hover:shadow-lg mt-2">
+              Login →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================
+       PAGE: ADMIN HOME
+       (mirrors hostel_mess.html home but with admin controls active)
+  ============================= -->
+  <div id="page-admin-home" class="page">
+    <div class="max-w-6xl mx-auto px-4 py-10">
+
+      <!-- Hero (same as hostel_mess.html) -->
+      <div class="mb-8 text-center">
+        <div class="inline-block bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full mb-4">IIEST Shibpur Campus</div>
+        <h1 class="text-4xl sm:text-5xl font-display font-extrabold text-slate-900 leading-tight">
+          Hostel Mess <span class="text-orange-500">Management</span>
+        </h1>
+        <p class="mt-3 text-slate-500 text-base max-w-xl mx-auto">You are logged in as JMCR Admin. Use the buttons in the top-right to manage menus and split expenses.</p>
+
+        <!-- Logged-in hostel badge -->
+        <div id="admin-hostel-badge" class="mt-4 inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-bold px-4 py-1.5 rounded-full">
+          ✅ Logged in as Admin — <span id="badge-hostel-name" class="underline"></span>
+        </div>
+      </div>
+
+      <!-- Quick action cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <button onclick="openListMenuModal()"
+          class="bg-white border-2 border-blue-200 hover:border-blue-400 rounded-2xl p-5 text-left transition-all hover:shadow-md group">
+          <div class="text-3xl mb-2">📋</div>
+          <div class="font-display font-bold text-slate-800 group-hover:text-blue-600">List Menu</div>
+          <div class="text-xs text-slate-400 mt-1">Set today's Breakfast, Lunch & Dinner menu live</div>
+        </button>
+        <button onclick="openSplitModal()"
+          class="bg-white border-2 border-violet-200 hover:border-violet-400 rounded-2xl p-5 text-left transition-all hover:shadow-md group">
+          <div class="text-3xl mb-2">💸</div>
+          <div class="font-display font-bold text-slate-800 group-hover:text-violet-600">Split Expenses</div>
+          <div class="text-xs text-slate-400 mt-1">Add an expense item and split across students</div>
+        </button>
+        <button onclick="logout()"
+          class="bg-white border-2 border-slate-200 hover:border-red-300 rounded-2xl p-5 text-left transition-all hover:shadow-md group">
+          <div class="text-3xl mb-2">🚪</div>
+          <div class="font-display font-bold text-slate-800 group-hover:text-red-500">Logout</div>
+          <div class="text-xs text-slate-400 mt-1">Return to the main hostel portal</div>
+        </button>
+      </div>
+
+      <!-- Info panel -->
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">
+        <strong>📌 Admin Note:</strong> Any menu you set via "List Menu" will be marked live for today. Expense splits are recorded under the <strong>April</strong> month and visible in the Monthly Expenses dashboard on the main portal.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================
+       MODAL: List Menu
+  ============================= -->
+  <div id="list-menu-modal" class="modal-overlay" onclick="closeModalOutside(event,'list-menu-modal')">
+    <div class="modal-box">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="font-display font-bold text-xl text-slate-800">📋 List Today's Menu</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Fill all meals and press "Make it Live"</p>
+        </div>
+        <button onclick="closeModal('list-menu-modal')" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Success banner (hidden initially) -->
+      <div id="menu-success" class="hidden bg-green-50 border border-green-200 text-green-700 text-sm font-semibold rounded-xl px-4 py-3 mb-4 text-center">
+        ✅ Menu is now <strong>LIVE</strong>! Students can view the updated menu.
+      </div>
+
+      <!-- Meal Fields -->
+      <div class="space-y-4">
+
+        <!-- Breakfast -->
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
+            🌅 Breakfast
+          </label>
+          <textarea id="menu-breakfast" class="field" placeholder="e.g. Idli + Sambar, Dosa, Upma, Banana..."></textarea>
+        </div>
+
+        <!-- Lunch -->
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
+            ☀️ Lunch
+          </label>
+          <textarea id="menu-lunch" class="field" placeholder="e.g. Roti + Dal + Rice + Aloo Dum..."></textarea>
+        </div>
+
+        <!-- Dinner -->
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">
+            🌙 Dinner
+          </label>
+          <textarea id="menu-dinner" class="field" placeholder="e.g. Roti + Dal + Rice + Chicken Curry..."></textarea>
+        </div>
+
+      </div>
+
+      <!-- Make it Live button -->
+      <button onclick="makeMenuLive()"
+        class="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-display font-bold py-3 rounded-xl transition-all text-sm shadow-md">
+        🚀 Make it Live
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- ============================
+       MODAL: Split Expenses
+  ============================= -->
+  <div id="split-modal" class="modal-overlay" onclick="closeModalOutside(event,'split-modal')">
+    <div class="modal-box">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="font-display font-bold text-xl text-slate-800">💸 Split Expenses</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Enter item details to calculate per-student share</p>
+        </div>
+        <button onclick="closeModal('split-modal')" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Success banner (hidden initially) -->
+      <div id="split-added-msg" class="hidden bg-green-50 border border-green-200 text-green-700 text-sm font-semibold rounded-xl px-4 py-3 mb-4 text-center">
+        ✅ Expense added to <strong>April</strong> month successfully!
+      </div>
+
+      <!-- Fields -->
+      <div class="space-y-4">
+
+        <!-- Item Name -->
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Item Name</label>
+          <input id="split-item" type="text" class="field" placeholder="e.g. Chicken, Gas, Vegetables..." />
+        </div>
+
+        <!-- Two-column: Total Expense + Total Students -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Total Expense (₹)</label>
+            <input id="split-total" type="number" min="0" class="field" placeholder="e.g. 3200"
+              oninput="calcSplit()" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Total Students</label>
+            <input id="split-students" type="number" min="1" class="field" placeholder="e.g. 120"
+              oninput="calcSplit()" />
+          </div>
+        </div>
+
+        <!-- Live split result (appears instantly on input) -->
+        <div id="split-result" class="split-result">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-green-700 uppercase tracking-widest mb-0.5">Per Student Amount</div>
+              <div class="font-display font-extrabold text-3xl text-green-800">
+                ₹<span id="split-amount">0.00</span>
+              </div>
+              <div class="text-xs text-green-600 mt-0.5" id="split-breakdown"></div>
+            </div>
+            <span class="text-4xl">🧮</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Split button -->
+      <button onclick="doSplit()"
+        class="mt-5 w-full bg-violet-600 hover:bg-violet-700 text-white font-display font-bold py-3 rounded-xl transition-all text-sm shadow-md">
+        ✂️ Split
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- ============================
+       TOAST NOTIFICATION
+  ============================= -->
+  <div id="toast" class="fixed bottom-6 right-6 z-[200] text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 bg-green-600">
+    ✓ Action successful!
+  </div>
+
+
+<!-- ============================
+     JAVASCRIPT
+============================= -->
+<script>
+/* ===================================================
+   CREDENTIALS (default admin / admin123)
+=================================================== */
+const ADMIN_CREDS = { username: 'admin', password: 'admin123' };
+
+/* ===================================================
+   STATE
+=================================================== */
+let isLoggedIn = false;
+let loggedInHostel = '';
+
+/* ===================================================
+   INIT: Set date in navbar
+=================================================== */
+(function init() {
+  const today = new Date();
+  document.getElementById('nav-date').textContent = today.toLocaleDateString('en-IN', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+  });
+})();
+
+/* ===================================================
+   PAGE ROUTING
+=================================================== */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ===================================================
+   TOGGLE PASSWORD VISIBILITY
+=================================================== */
+function togglePass() {
+  const f = document.getElementById('login-pass');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+/* ===================================================
+   LOGIN LOGIC
+=================================================== */
+function doLogin() {
+  const hostel   = document.getElementById('login-hostel').value.trim();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value.trim();
+  const errBox   = document.getElementById('login-error');
+
+  // Validate hostel selection
+  if (!hostel) {
+    errBox.textContent = '⚠️ Please select a hostel first.';
+    errBox.classList.remove('hidden');
+    return;
+  }
+
+  // Validate credentials
+  if (username !== ADMIN_CREDS.username || password !== ADMIN_CREDS.password) {
+    errBox.textContent = '❌ Incorrect username or password.';
+    errBox.classList.remove('hidden');
+    return;
+  }
+
+  // ── Login successful ──
+  errBox.classList.add('hidden');
+  isLoggedIn   = true;
+  loggedInHostel = hostel;
+
+  // Update navbar: hide login btn, show admin controls
+  document.getElementById('login-btn-wrap').classList.add('hidden');
+  document.getElementById('admin-controls').classList.remove('hidden');
+  document.getElementById('admin-controls').classList.add('flex');
+  document.getElementById('logged-in-label').textContent = `✓ ${hostel}`;
+
+  // Update admin home page badge
+  document.getElementById('badge-hostel-name').textContent = hostel;
+
+  // Navigate to admin home
+  showPage('admin-home');
+}
+
+/* ===================================================
+   LOGOUT
+=================================================== */
+function logout() {
+  isLoggedIn = false;
+  loggedInHostel = '';
+
+  // Swap navbar buttons back
+  document.getElementById('login-btn-wrap').classList.remove('hidden');
+  document.getElementById('admin-controls').classList.add('hidden');
+  document.getElementById('admin-controls').classList.remove('flex');
+
+  // Reset login form
+  document.getElementById('login-hostel').value = '';
+  document.getElementById('login-user').value   = 'admin';
+  document.getElementById('login-pass').value   = 'admin123';
+
+  // Go back to login page
+  showPage('login');
+}
+
+/* ===================================================
+   MODAL HELPERS
+=================================================== */
+function openListMenuModal() {
+  // Reset success banner
+  document.getElementById('menu-success').classList.add('hidden');
+  // Clear fields
+  ['menu-breakfast','menu-lunch','menu-dinner'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('list-menu-modal').classList.add('open');
+}
+
+function openSplitModal() {
+  // Reset
+  document.getElementById('split-added-msg').classList.add('hidden');
+  document.getElementById('split-result').classList.remove('visible');
+  document.getElementById('split-item').value = '';
+  document.getElementById('split-total').value = '';
+  document.getElementById('split-students').value = '';
+  document.getElementById('split-amount').textContent = '0.00';
+  document.getElementById('split-modal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function closeModalOutside(e, id) {
+  // Close only if user clicked the dark overlay itself
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+/* ===================================================
+   LIST MENU: Make it Live
+=================================================== */
+function makeMenuLive() {
+  const b = document.getElementById('menu-breakfast').value.trim();
+  const l = document.getElementById('menu-lunch').value.trim();
+  const d = document.getElementById('menu-dinner').value.trim();
+
+  if (!b || !l || !d) {
+    showToast('⚠️ Please fill in all three meal fields.', 'amber');
+    return;
+  }
+
+  /*
+    ── Cross-page communication ──
+    We store the live menu in sessionStorage so hostel_mess.html can read it.
+    Key: "live_menu"
+    Value: JSON { breakfast, lunch, dinner, hostel, setAt }
+  */
+  const liveMenu = {
+    breakfast: b,
+    lunch: l,
+    dinner: d,
+    hostel: loggedInHostel,
+    setAt: new Date().toISOString()
+  };
+  sessionStorage.setItem('live_menu', JSON.stringify(liveMenu));
+
+  // Show success banner inside modal
+  document.getElementById('menu-success').classList.remove('hidden');
+
+  showToast('✅ Menu is now live!', 'green');
+}
+
+/* ===================================================
+   SPLIT EXPENSES: Live Calculation
+=================================================== */
+function calcSplit() {
+  const total    = parseFloat(document.getElementById('split-total').value)    || 0;
+  const students = parseInt(document.getElementById('split-students').value)   || 0;
+  const resultBox = document.getElementById('split-result');
+
+  if (total > 0 && students > 0) {
+    const perHead = (total / students).toFixed(2);
+    document.getElementById('split-amount').textContent = perHead;
+    document.getElementById('split-breakdown').textContent =
+      `₹${total.toLocaleString('en-IN')} ÷ ${students} students`;
+    resultBox.classList.add('visible');
+  } else {
+    resultBox.classList.remove('visible');
+  }
+}
+
+/* ===================================================
+   SPLIT EXPENSES: Confirm & Record
+=================================================== */
+function doSplit() {
+  const item     = document.getElementById('split-item').value.trim();
+  const total    = parseFloat(document.getElementById('split-total').value)   || 0;
+  const students = parseInt(document.getElementById('split-students').value)  || 0;
+
+  if (!item || total <= 0 || students <= 0) {
+    showToast('⚠️ Fill in all fields correctly.', 'amber');
+    return;
+  }
+
+  const perHead = (total / students).toFixed(2);
+
+  /*
+    ── Persist split expense to sessionStorage ──
+    Key: "april_splits"
+    Value: JSON array of { item, total, students, perHead }
+    hostel_mess.html reads this and appends to April expenses.
+  */
+  const existing = JSON.parse(sessionStorage.getItem('april_splits') || '[]');
+  existing.push({ item, total, students, perHead, addedAt: new Date().toISOString() });
+  sessionStorage.setItem('april_splits', JSON.stringify(existing));
+
+  // Show confirmation inside modal
+  document.getElementById('split-added-msg').classList.remove('hidden');
+
+  showToast(`✅ ₹${total} for "${item}" added to April.`, 'green');
+}
+
+/* ===================================================
+   TOAST UTILITY
+=================================================== */
+function showToast(msg, color = 'green') {
+  const t = document.getElementById('toast');
+  const colorMap = {
+    green: 'bg-green-600',
+    amber: 'bg-amber-500',
+    red:   'bg-red-600'
+  };
+  // Remove old color classes
+  t.className = `fixed bottom-6 right-6 z-[200] text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-lg transition-opacity duration-300 ${colorMap[color] || colorMap.green}`;
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+</script>
+</body>
+</html>
